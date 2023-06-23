@@ -1,30 +1,26 @@
-var mysql = require("mysql");
-var connection = mysql.createConnection({
-  connectionLimit: 10,
-  host: "localhost",
-  user: "root",
-  password: "password",
-  database: "info",
-});
-
-connection.connect(function (err) {
-  if (err) {
-    console.error("error connecting: " + err.stack);
-    return;
-  }
-});
+var mysql = require("mysql2/promise");
+const bluebird = require("bluebird");
 
 const express = require("express");
 const app = express();
-const port = 80;
+const port = 8000;
 
-app.get("/", (req, res) => {
-  connection.query("SELECT * from users", function (err, rows, fields) {
-    if (err) throw err;
-    console.log("info usuario 0: ", rows[0]);
-    res.send(rows);
+app.get("/", async (req, res) => {
+  var connection = await mysql.createConnection({
+    host: "db",
+    user: "root",
+    password: "password",
+    database: "info",
+    Promise: bluebird,
   });
-  res.send("Hello World!");
+
+  const [rows, fields] = await connection.execute("SELECT * from users");
+  console.log(rows[0]);
+  if (rows.length > 0) {
+    res.send(rows);
+    return;
+  }
+  res.send("No data");
 });
 
 app.listen(port, () => {
